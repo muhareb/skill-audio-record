@@ -113,7 +113,7 @@ class AudioRecordSkill(MycroftSkill):
         self.settings["duration"] = (stop_time -
                                      self.start_time).total_seconds()
         if self.settings["duration"] <= 0:
-            self.settings["duration"] = 60  # default recording duration
+            self.settings["duration"] = 30  # default recording duration
 
         # Throw away any previous recording
         try:
