@@ -24,6 +24,7 @@ from mycroft.messagebus.message import Message
 from mycroft.util import record, play_wav
 from mycroft.util.parse import extract_datetime
 from mycroft.util.time import now_local
+from mycroft.util.format import nice_duration
 
 class AudioRecordSkill(MycroftSkill):
     def __init__(self):
@@ -113,7 +114,7 @@ class AudioRecordSkill(MycroftSkill):
         self.settings["duration"] = (stop_time -
                                      self.start_time).total_seconds()
         if self.settings["duration"] <= 0:
-            self.settings["duration"] = 30  # default recording duration
+            self.settings["duration"] = 10  # default recording duration
 
         # Throw away any previous recording
         try:
@@ -122,10 +123,12 @@ class AudioRecordSkill(MycroftSkill):
             pass
 
         if self.has_free_disk_space():
-            record_for = nice_duration(self, self.settings["duration"],
-                                       lang=self.lang)
+            record_for = nice_duration(self.settings["duration"],
+                                       self.lang)
+            
             self.speak_dialog('audio.record.start.duration',
                               {'duration': record_for})
+            print(self.settings["duration"])
 
             # Initiate recording
             wait_while_speaking()
@@ -161,6 +164,7 @@ class AudioRecordSkill(MycroftSkill):
 
     def end_recording(self):
         self.cancel_scheduled_event('RecordingFeedback')
+        self.speak_dialog("تم انتهاء التسجيل")
 
         if self.record_process:
             # Stop recording
@@ -220,79 +224,5 @@ def create_skill():
 
 
 ##########################################################################
-# TODO: Move to mycroft.util.format
-from mycroft.util.format import pronounce_number
 
 
-def nice_duration(self, duration, lang="en-us", speech=True):
-    """ Convert duration in seconds to a nice spoken timespan
-
-    Examples:
-       duration = 60  ->  "1:00" or "one minute"
-       duration = 163  ->  "2:43" or "two minutes forty three seconds"
-
-    Args:
-        duration: time, in seconds
-        speech (bool): format for speech (True) or display (False)
-    Returns:
-        str: timespan as a string
-    """
-
-    # Do traditional rounding: 2.5->3, 3.5->4, plus this
-    # helps in a few cases of where calculations generate
-    # times like 2:59:59.9 instead of 3:00.
-    duration += 0.5
-
-    days = int(duration // 86400)
-    hours = int(duration // 3600 % 24)
-    minutes = int(duration // 60 % 60)
-    seconds = int(duration % 60)
-
-    if speech:
-        out = ""
-        if days > 0:
-            out += pronounce_number(days, lang) + " "
-            if days == 1:
-                out += self.translate("day")
-            else:
-                out += self.translate("days")
-            out += " "
-        if hours > 0:
-            if out:
-                out += " "
-            out += pronounce_number(hours, lang) + " "
-            if hours == 1:
-                out += self.translate("hour")
-            else:
-                out += self.translate("hours")
-        if minutes > 0:
-            if out:
-                out += " "
-            out += pronounce_number(minutes, lang) + " "
-            if minutes == 1:
-                out += self.translate("minute")
-            else:
-                out += self.translate("minutes")
-        if seconds > 0:
-            if out:
-                out += " "
-            out += pronounce_number(seconds, lang) + " "
-            if seconds == 1:
-                out += self.translate("second")
-            else:
-                out += self.translate("seconds")
-    else:
-        # M:SS, MM:SS, H:MM:SS, Dd H:MM:SS format
-        out = ""
-        if days > 0:
-            out = str(days) + "d "
-        if hours > 0 or days > 0:
-            out += str(hours) + ":"
-        if minutes < 10 and (hours > 0 or days > 0):
-            out += "0"
-        out += str(minutes)+":"
-        if seconds < 10:
-            out += "0"
-        out += str(seconds)
-
-    return out
