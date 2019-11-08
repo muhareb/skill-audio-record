@@ -110,7 +110,7 @@ class AudioRecordSkill(MycroftSkill):
 
         # Calculate how long to record
         self.start_time = now_local()
-        stop_time, _ = extract_datetime(utterance, lang=self.lang)
+        stop_time, _,_ = extract_datetime(utterance, lang=self.lang)
         self.settings["duration"] = (stop_time -
                                      self.start_time).total_seconds()
         if self.settings["duration"] <= 0:
@@ -224,5 +224,4 @@ def create_skill():
 
 
 ##########################################################################
-
 
